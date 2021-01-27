@@ -2,7 +2,7 @@
 
 #### 简述
 
-Storage包通过interface定义存储的基本方法，加上单例实现一个存储包
+Storage包通过interface定义存储的基本方法
 
 #### 支持
 - fs: 文件系统，本地存储
@@ -13,28 +13,28 @@ Storage包通过interface定义存储的基本方法，加上单例实现一个�
 
 - 保存data至某个对象
 
-Put(key string, r io.Reader, contentLength int64) error
+Put(t, key string, r io.Reader, contentLength int64) error
 
 - 获取文件流
 
-FileStream(key string) (io.ReadCloser, *FileInfo, error)
+FileStream(t, key string) (io.ReadCloser, *FileInfo, error)
 
 - 获取对象
 
-Get(key string, wa io.WriterAt) error
+Get(t, key string, wa io.WriterAt) error
 
 - 获取文件信息  大小，修改时间，权限
 
-Stat(key string) (*FileInfo, error)
+Stat(t, key string) (*FileInfo, error)
 
 - 删除对象
 	
-Del(key string) error
+Del(t, key string) error
 
 - 获取对象大小
 
-Size(key string) (int64, error)
+Size(t, key string) (int64, error)
 
 - 判断对象是否存在
 	
-IsExist(key string) (bool, error)
+IsExist(t, key string) (bool, error)

@@ -73,7 +73,7 @@ func Init(cfg *QingStor) error {
 		return err
 	}
 
-	storage.Register(&qingStor{
+	storage.Register("QY", &qingStor{
 		qsSvc:  qsSvc,
 		bucket: bucket,
 	})

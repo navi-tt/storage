@@ -2,10 +2,12 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
+	"runtime"
+	"strings"
 	"time"
 	"unicode/utf8"
 )
@@ -15,15 +17,19 @@ import (
 // qs 青云S3接口存储
 // cos 腾讯云COS共享存储
 
-var (
-	once sync.Once
-	inst Storage
+const (
+	COS = "COS"
+	QS  = "QINGYUN"
+	FS  = "FS"
 )
 
-func Register(s Storage) {
-	once.Do(func() {
-		inst = s
-	})
+var (
+	//once sync.Once
+	instMap map[string]Storage
+)
+
+func Register(t string, s Storage) {
+	instMap[t] = s
 }
 
 var (
@@ -56,7 +62,7 @@ type Storage interface {
 	IsExist(key string) (bool, error)
 }
 
-func PutByPath(key string, path string) error {
+func PutByPath(t string, key string, path string) error {
 	fd, err := os.Open(path)
 	if err != nil {
 		return err
@@ -68,14 +74,19 @@ func PutByPath(key string, path string) error {
 		return err
 	}
 
-	return Put(key, fd, fi.Size())
+	return Put(t, key, fd, fi.Size())
 }
 
-func Put(key string, r io.Reader, contentLength int64) error {
+func Put(t string, key string, r io.Reader, contentLength int64) error {
+	inst, ok := instMap[t]
+	if !ok {
+		return fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.Put(key, r, contentLength)
 }
 
-func GetToPath(key string, path string) error {
+func GetToPath(t, key string, path string) error {
 	dir, _ := filepath.Split(path)
 	_ = os.MkdirAll(dir, 0666)
 	fd, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
@@ -83,26 +94,51 @@ func GetToPath(key string, path string) error {
 		return err
 	}
 	defer fd.Close()
-	return Get(key, fd)
+	return Get(t, key, fd)
 }
 
-func Get(key string, wa io.WriterAt) error {
+func Get(t, key string, wa io.WriterAt) error {
+	inst, ok := instMap[t]
+	if !ok {
+		return fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.Get(key, wa)
 }
 
-func FileStream(key string) (io.ReadCloser, *FileInfo, error) {
+func FileStream(t, key string) (io.ReadCloser, *FileInfo, error) {
+	inst, ok := instMap[t]
+	if !ok {
+		return nil, nil, fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.FileStream(key)
 }
 
-func Size(key string) (int64, error) {
+func Size(t, key string) (int64, error) {
+	inst, ok := instMap[t]
+	if !ok {
+		return 0, fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.Size(key)
 }
 
-func IsExist(key string) (bool, error) {
+func IsExist(t, key string) (bool, error) {
+	inst, ok := instMap[t]
+	if !ok {
+		return false, fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.IsExist(key)
 }
 
-func Del(key string) error {
+func Del(t, key string) error {
+	inst, ok := instMap[t]
+	if !ok {
+		return fmt.Errorf("unregister storage type : %s", t)
+	}
+
 	return inst.Del(key)
 }
 
@@ -112,7 +148,15 @@ func Del(key string) error {
 // 不能包含 ' '、'\t'、'\r'或者'\n'等字符
 
 func ValidKey(key string) bool {
-	if len(key) == 0 || key[0] == '\\' || len(key) >= 1024 {
+	system := strings.ToLower(runtime.GOOS)
+
+	if system == "ubuntu" {
+		if strings.Contains(key, "（") || strings.Contains(key, "）") {
+			return false
+		}
+	}
+
+	if len(key) == 0 || key[0] == '\\' || key[0] == '/' || len(key) >= 1024 {
 		return false
 	}
 

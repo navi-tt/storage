@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 		},
 	})
 
-	storage.Register(&tensenCos{
+	storage.Register(storage.COS,&tensenCos{
 		client: c,
 	})
 
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestTensenCos_Put(t *testing.T) {
-	err := storage.PutByPath("/kst/test.wav", "../testdata/test_wav.wav")
+	err := storage.PutByPath(storage.COS,"/kst/test.wav", "../testdata/test_wav.wav")
 	if err != nil {
 		t.Fatalf("put error : %s", err.Error())
 		return
@@ -44,7 +44,7 @@ func TestTensenCos_Put(t *testing.T) {
 }
 
 func TestTensenCos_Get(t *testing.T) {
-	_, _, err := storage.FileStream("/kst/test.wav")
+	_, _, err := storage.FileStream(storage.COS,"/kst/test.wav")
 	if err != nil {
 		t.Fatalf("get error : %s", err.Error())
 		return
@@ -54,7 +54,7 @@ func TestTensenCos_Get(t *testing.T) {
 }
 
 func TestTensenCos_IsExist(t *testing.T) {
-	existed, err := storage.IsExist("/kst/test.txt")
+	existed, err := storage.IsExist(storage.COS,"/kst/test.txt")
 	if err != nil {
 		t.Fatalf("is existed error : %s", err.Error())
 		return
@@ -64,7 +64,7 @@ func TestTensenCos_IsExist(t *testing.T) {
 }
 
 func TestTensenCos_Size(t *testing.T) {
-	size, err := storage.Size("/kst/test.txt")
+	size, err := storage.Size(storage.COS,"/kst/test.txt")
 	if err != nil {
 		t.Fatalf("size error : %s", err.Error())
 		return
@@ -74,7 +74,7 @@ func TestTensenCos_Size(t *testing.T) {
 }
 
 func TestTensenCos_Del(t *testing.T) {
-	err := storage.Del("/kst/test.txt")
+	err := storage.Del(storage.COS,"/kst/test.txt")
 	if err != nil {
 		t.Fatalf("delete error : %s", err.Error())
 		return

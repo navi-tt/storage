@@ -32,7 +32,7 @@ func Init(cfg *COS) error {
 		},
 	})
 
-	storage.Register(&tensenCos{
+	storage.Register("COS", &tensenCos{
 		client: c,
 	})
 	return nil

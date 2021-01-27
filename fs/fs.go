@@ -13,7 +13,7 @@ type FS struct {
 }
 
 func Init(cfg *FS) error {
-	storage.Register(&fs{
+	storage.Register("FS", &fs{
 		baseDir: cfg.BaseDir,
 	})
 	return nil
