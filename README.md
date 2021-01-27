@@ -2,7 +2,8 @@
 
 #### 简述
 
-Storage包通过interface定义存储的基本方法
+Storage包通过interface定义存储的基本方法。\
+允许初始化多个storage，场景用于一个主存储，一个副存储用于备份。
 
 #### 支持
 - fs: 文件系统，本地存储

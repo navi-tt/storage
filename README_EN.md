@@ -1,7 +1,9 @@
 ## Storage
 
 #### Brief
-Storage package define basic methods to implement object functionality
+Storage package define basic methods to implement object functionality\
+Allow init multi storage, is used to implement backup mode 
+
 
 #### Support
 
