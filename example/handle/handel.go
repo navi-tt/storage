@@ -1,4 +1,4 @@
-package handel
+package handle
 
 import (
 	"github.com/navi-tt/storage"
