@@ -12,7 +12,7 @@ var s storage.Storage
 
 func TestMain(m *testing.M) {
 	s = &fs{
-		baseDir: "./tmp",
+		baseDir: "../testdata",
 	}
 	m.Run()
 }
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func TestPut(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	buf.WriteString("this is a test filesadfsdafdfadfadfasfsadfadsfafdasdfadfadgfasdgfdasgasdfadsfadsfjkasjdfipasddhjflakfjas;ldkjas;oidja;sdlkfa;osdia;sdgjva;sfijsdao;fa;fkda;lksdgbha;lfkha;ldjgkasl;dfasdk;ldsjk;ghas;dfljsa;ghsdlkal;sdghjsdka;gj;nsd;lkj; ncs;lfjaslcnfjklscnjklnjlkcmndjnka;sijfxa;;kf;l ;cxmjak;lmklfcanm;lknkjnc lhjnjkhsnxkjnlkxcjfhkclafdjkxnalknxl!")
-	err := s.Put("test.txt", buf, 0)
+	err := s.Put("test_fs.txt", buf, 0)
 	if err != nil {
 		t.Fatal(err)
 	}

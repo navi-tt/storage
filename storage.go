@@ -18,7 +18,7 @@ import (
 
 var (
 	//once sync.Once
-	instMap map[storageType]Storage
+	instMap = make(map[storageType]Storage, 0)
 )
 
 func Register(t storageType, s Storage) {
@@ -54,6 +54,18 @@ type Storage interface {
 
 	// 判断文件是否存在
 	IsExist(key string) (bool, error)
+
+	CheckPermission(key string) error
+}
+
+func CheckPermission(t storageType, key string) error {
+
+	inst, ok := instMap[t]
+	if !ok {
+		return ErrStorageUnRegister
+	}
+
+	return inst.CheckPermission(key)
 }
 
 func PutByPath(t storageType, key string, path string) error {

@@ -223,3 +223,7 @@ func (s *qingStor) Del(key string) error {
 
 	return nil
 }
+
+func (s *qingStor) CheckPermission(key string) error {
+	return nil
+}

@@ -39,3 +39,9 @@ Size(t, key string) (int64, error)
 - 判断对象是否存在
 	
 IsExist(t, key string) (bool, error)
+
+#### Road map
+
+- 20200220
+
+添加使用范例

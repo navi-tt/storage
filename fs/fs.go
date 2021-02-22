@@ -186,3 +186,8 @@ func (f *fs) path(key string) string {
 func (f *fs) pathJoinBaseDir(key string) string {
 	return filepath.Join(f.baseDir, key)
 }
+
+func (f *fs) CheckPermission(key string) error {
+
+	return nil
+}

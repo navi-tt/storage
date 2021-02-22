@@ -40,3 +40,9 @@ Size(typ, key string) (int64, error)
 - Is object existed
 	
 IsExist(typ, key string) (bool, error)
+
+#### Road map
+
+- 20200220
+
+add  example
