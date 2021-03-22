@@ -143,7 +143,6 @@ func (s *qingStor) Get(key string, wa io.WriterAt) error {
 	return storage.Copy(wa, output.Body)
 }
 
-// 调用者需要关闭文件
 func (s *qingStor) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 	if !storage.ValidKey(key) {
 		return nil, nil, storage.ErrObjectKeyInvalid

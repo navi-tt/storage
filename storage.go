@@ -34,6 +34,7 @@ var (
 	ErrObjectKeyInvalid          = errors.New("invalid object key")
 	ErrObjectWritePermissionDeny = errors.New("no write permission")
 	ErrObjectReadPermissionDeny  = errors.New("no read permission")
+	ErrObjectEmptyContent        = errors.New("zero content")
 	ErrStorageUnRegister         = errors.New("unregister storage")
 )
 
