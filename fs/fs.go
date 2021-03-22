@@ -70,6 +70,10 @@ func (f *fs) Put(key string, r io.Reader, contentLength int64) error {
 
 	fd, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
 	if err != nil {
+
+		if os.IsPermission(err) {
+			return storage.ErrObjectWritePermissionDeny
+		}
 		return err
 	}
 	defer fd.Close()
@@ -92,6 +96,10 @@ func (f *fs) Get(key string, wa io.WriterAt) error {
 		if os.IsNotExist(err) {
 			return storage.ErrObjectNotFound
 		}
+
+		if os.IsPermission(err) {
+			return storage.ErrObjectReadPermissionDeny
+		}
 		return err
 	}
 	defer fd.Close()
@@ -112,6 +120,9 @@ func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 		if os.IsNotExist(err) {
 			return nil, nil, storage.ErrObjectNotFound
 		}
+		if os.IsPermission(err) {
+			return nil, nil, storage.ErrObjectReadPermissionDeny
+		}
 		return nil, nil, err
 	}
 
@@ -130,8 +141,16 @@ func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 
 func (f *fs) Stat(key string) (*storage.FileInfo, error) {
 	fmt.Printf("[FS STAT] object: %s \n", key)
+
 	fd, err := f.open(key)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, storage.ErrObjectNotFound
+		}
+		if os.IsPermission(err) {
+			return nil, storage.ErrObjectReadPermissionDeny
+		}
+
 		return nil, err
 	}
 
@@ -153,11 +172,16 @@ func (f *fs) Del(key string) error {
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
+
 	path := f.path(key)
 	err := os.Remove(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return storage.ErrObjectNotFound
+		}
+
+		if os.IsPermission(err) {
+			return storage.ErrObjectWritePermissionDeny
 		}
 		return err
 	}
@@ -176,6 +200,10 @@ func (f *fs) Size(key string) (int64, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return 0, storage.ErrObjectNotFound
+		}
+
+		if os.IsPermission(err) {
+			return 0, storage.ErrObjectReadPermissionDeny
 		}
 		return 0, err
 	}
@@ -207,10 +235,4 @@ func (f *fs) path(key string) string {
 
 func (f *fs) pathJoinBaseDir(key string) string {
 	return filepath.Join(f.baseDir, key)
-}
-
-func (f *fs) CheckPermission(key string) error {
-	fmt.Printf("[FS CHECKPERMISSION] object: %s \n", key)
-
-	return nil
 }

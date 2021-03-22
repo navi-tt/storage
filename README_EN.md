@@ -1,9 +1,8 @@
 ## Storage
 
 #### Brief
-Storage package define basic methods to implement object functionality\
-Allow init multi storage, is used to implement backup mode 
 
+Storage package define basic methods to implement object functionality
 
 #### Support
 
@@ -30,7 +29,7 @@ Get(typ, key string, wa io.WriterAt) error
 Stat(typ, key string) (*FileInfo, error)
 
 - Delete object
-	
+
 Del(typ, key string) error
 
 - Get the size of object
@@ -38,11 +37,11 @@ Del(typ, key string) error
 Size(typ, key string) (int64, error)
 
 - Is object existed
-	
+
 IsExist(typ, key string) (bool, error)
 
 #### Road map
 
 - 20200220
 
-add  example
+add example

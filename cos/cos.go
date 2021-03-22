@@ -199,7 +199,3 @@ func (s *tensenCos) Del(key string) error {
 
 	return nil
 }
-
-func (s *tensenCos) CheckPermission(key string) error {
-	return nil
-}

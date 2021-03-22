@@ -30,9 +30,11 @@ var (
 //}
 
 var (
-	ErrObjectNotFound    = errors.New("object not found")
-	ErrObjectKeyInvalid  = errors.New("invalid object key")
-	ErrStorageUnRegister = errors.New("unregister storage")
+	ErrObjectNotFound            = errors.New("object not found")
+	ErrObjectKeyInvalid          = errors.New("invalid object key")
+	ErrObjectWritePermissionDeny = errors.New("no write permission")
+	ErrObjectReadPermissionDeny  = errors.New("no read permission")
+	ErrStorageUnRegister         = errors.New("unregister storage")
 )
 
 type Storage interface {
@@ -60,12 +62,6 @@ type Storage interface {
 
 	// 判断文件是否存在
 	IsExist(key string) (bool, error)
-
-	CheckPermission(key string) error
-}
-
-func CheckPermission(key string) error {
-	return inst.CheckPermission(key)
 }
 
 func PutByPath(key string, path string) error {
