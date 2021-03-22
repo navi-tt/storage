@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,12 +19,15 @@ import (
 
 var (
 	//once sync.Once
-	instMap = make(map[storageType]Storage, 0)
+	inst    Storage
+	instMap = make(map[string]Storage, 0)
 )
 
-func Register(t storageType, s Storage) {
-	instMap[t] = s
-}
+//func Register(s Storage) {
+//	once.Do(func() {
+//		inst = s
+//	})
+//}
 
 var (
 	ErrObjectNotFound    = errors.New("object not found")
@@ -33,6 +37,8 @@ var (
 
 type Storage interface {
 	//把一个文件当做对象，读写即为，Get和Put
+
+	Init(cfg string) (Storage, error)
 
 	// 保存data至某个文件
 	Put(key string, r io.Reader, contentLength int64) error
@@ -58,17 +64,11 @@ type Storage interface {
 	CheckPermission(key string) error
 }
 
-func CheckPermission(t storageType, key string) error {
-
-	inst, ok := instMap[t]
-	if !ok {
-		return ErrStorageUnRegister
-	}
-
+func CheckPermission(key string) error {
 	return inst.CheckPermission(key)
 }
 
-func PutByPath(t storageType, key string, path string) error {
+func PutByPath(key string, path string) error {
 	fd, err := os.Open(path)
 	if err != nil {
 		return err
@@ -80,19 +80,14 @@ func PutByPath(t storageType, key string, path string) error {
 		return err
 	}
 
-	return Put(t, key, fd, fi.Size())
+	return Put(key, fd, fi.Size())
 }
 
-func Put(t storageType, key string, r io.Reader, contentLength int64) error {
-	inst, ok := instMap[t]
-	if !ok {
-		return ErrStorageUnRegister
-	}
-
+func Put(key string, r io.Reader, contentLength int64) error {
 	return inst.Put(key, r, contentLength)
 }
 
-func GetToPath(t storageType, key string, path string) error {
+func GetToPath(key string, path string) error {
 	dir, _ := filepath.Split(path)
 	_ = os.MkdirAll(dir, 0666)
 	fd, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
@@ -100,51 +95,26 @@ func GetToPath(t storageType, key string, path string) error {
 		return err
 	}
 	defer fd.Close()
-	return Get(t, key, fd)
+	return Get(key, fd)
 }
 
-func Get(t storageType, key string, wa io.WriterAt) error {
-	inst, ok := instMap[t]
-	if !ok {
-		return ErrStorageUnRegister
-	}
-
+func Get(key string, wa io.WriterAt) error {
 	return inst.Get(key, wa)
 }
 
-func FileStream(t storageType, key string) (io.ReadCloser, *FileInfo, error) {
-	inst, ok := instMap[t]
-	if !ok {
-		return nil, nil, ErrStorageUnRegister
-	}
-
+func FileStream(key string) (io.ReadCloser, *FileInfo, error) {
 	return inst.FileStream(key)
 }
 
-func Size(t storageType, key string) (int64, error) {
-	inst, ok := instMap[t]
-	if !ok {
-		return 0, ErrStorageUnRegister
-	}
-
+func Size(key string) (int64, error) {
 	return inst.Size(key)
 }
 
-func IsExist(t storageType, key string) (bool, error) {
-	inst, ok := instMap[t]
-	if !ok {
-		return false, ErrStorageUnRegister
-	}
-
+func IsExist(key string) (bool, error) {
 	return inst.IsExist(key)
 }
 
-func Del(t storageType, key string) error {
-	inst, ok := instMap[t]
-	if !ok {
-		return ErrStorageUnRegister
-	}
-
+func Del(key string) error {
 	return inst.Del(key)
 }
 
@@ -179,4 +149,37 @@ type FileInfo struct {
 	Size    int64
 	ModTime time.Time
 	Mode    os.FileMode
+}
+
+func Register(name string, inst Storage) {
+	if inst == nil {
+		panic("storage: Register storage is nil")
+	}
+	if _, dup := instMap[name]; !dup {
+		instMap[name] = inst
+	}
+	instMap[name] = inst
+}
+
+func Init(name string, cfg string) (Storage, error) {
+	s, ok := instMap[name]
+	if !ok {
+		return nil, fmt.Errorf("storage: unknown storage %q (forgotten import?)", name)
+	}
+
+	storageProvider, err := s.Init(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return storageProvider, nil
+}
+
+func GetStorage(name string) (Storage, error) {
+	s, ok := instMap[name]
+	if !ok {
+		return nil, fmt.Errorf("storage: unknown storage %q (forgotten import?)", name)
+	}
+
+	return s, nil
 }

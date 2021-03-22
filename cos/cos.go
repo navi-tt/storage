@@ -2,6 +2,7 @@ package cos
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/navi-tt/storage"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -20,22 +21,36 @@ type COS struct {
 	Protocol  string
 }
 
-func Init(cfg *COS) error {
-	storageUrl := fmt.Sprintf("%s://%s.%s", cfg.Protocol, cfg.Bucket, cfg.Host)
+func (s *tensenCos) Init(cfg string) (storage.Storage, error) {
+	fmt.Printf("[COS Init] conf : %s \n", cfg)
+
+	cosConfig := &COS{}
+	if err := json.Unmarshal([]byte(cfg), cosConfig); err != nil {
+		return nil, err
+	}
+
+	storageUrl := fmt.Sprintf("%s://%s.%s", cosConfig.Protocol, cosConfig.Bucket, cosConfig.Host)
 
 	u, _ := url.Parse(storageUrl)
 	b := &cos.BaseURL{BucketURL: u}
 	c := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:  cfg.SecretID,
-			SecretKey: cfg.SecretKey,
+			SecretID:  cosConfig.SecretID,
+			SecretKey: cosConfig.SecretKey,
 		},
 	})
 
-	storage.Register(storage.COS, &tensenCos{
+	scos := &tensenCos{
 		client: c,
-	})
-	return nil
+	}
+
+	return scos, nil
+}
+
+var cs = &tensenCos{}
+
+func init() {
+	storage.Register("cos", cs)
 }
 
 type tensenCos struct {

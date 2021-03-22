@@ -2,6 +2,7 @@ package qingyun
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/navi-tt/storage"
 	"github.com/qingstor/qingstor-sdk-go/v4/config"
@@ -24,10 +25,16 @@ type QingStor struct {
 	Port            int
 }
 
-func Init(cfg *QingStor) error {
-	qsCfg, err := config.New(cfg.AccesskeyId, cfg.SecretAccessKey)
+func (s *qingStor) Init(cfg string) (storage.Storage, error) {
+	fmt.Printf("[QS Init] config: %s \n", cfg)
+	qsConfig := &QingStor{}
+	if err := json.Unmarshal([]byte(cfg), qsConfig); err != nil {
+		return nil, err
+	}
+
+	qsCfg, err := config.New(qsConfig.AccesskeyId, qsConfig.SecretAccessKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	t := &http.Transport{
@@ -52,33 +59,39 @@ func Init(cfg *QingStor) error {
 		Timeout:   time.Second * 3,
 	}
 
-	if cfg.Host != "" {
-		qsCfg.Host = cfg.Host
+	if qsConfig.Host != "" {
+		qsCfg.Host = qsConfig.Host
 	}
 
-	if cfg.Port > 0 {
-		qsCfg.Port = cfg.Port
+	if qsConfig.Port > 0 {
+		qsCfg.Port = qsConfig.Port
 	}
 
-	if cfg.Protocol != "" {
-		qsCfg.Protocol = cfg.Protocol
+	if qsConfig.Protocol != "" {
+		qsCfg.Protocol = qsConfig.Protocol
 	}
 	qsSvc, err := qs.Init(qsCfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	bucket, err := qsSvc.Bucket(cfg.Bucket, cfg.Zone)
+	bucket, err := qsSvc.Bucket(qsConfig.Bucket, qsConfig.Zone)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	storage.Register(storage.QS, &qingStor{
+	qos = &qingStor{
 		qsSvc:  qsSvc,
 		bucket: bucket,
-	})
+	}
 
-	return nil
+	return qos, nil
+}
+
+var qos = &qingStor{}
+
+func init() {
+	storage.Register("qs", qos)
 }
 
 type qingStor struct {
@@ -87,7 +100,7 @@ type qingStor struct {
 }
 
 func (s *qingStor) Put(key string, r io.Reader, contentLength int64) error {
-	fmt.Printf("[OSS PUT] object: %s\n", key)
+	fmt.Printf("[QS PUT] object: %s\n", key)
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
@@ -111,7 +124,7 @@ func (s *qingStor) Put(key string, r io.Reader, contentLength int64) error {
 }
 
 func (s *qingStor) Get(key string, wa io.WriterAt) error {
-	fmt.Printf("[OSS GET] object: %s\n", key)
+	fmt.Printf("[QS GET] object: %s\n", key)
 
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
@@ -125,7 +138,6 @@ func (s *qingStor) Get(key string, wa io.WriterAt) error {
 		}
 		return err
 	}
-
 	defer output.Close()
 
 	return storage.Copy(wa, output.Body)
@@ -144,6 +156,7 @@ func (s *qingStor) FileStream(key string) (io.ReadCloser, *storage.FileInfo, err
 		}
 		return nil, nil, err
 	}
+	defer output.Close()
 
 	return output.Body, &storage.FileInfo{
 		Size:    *output.ContentLength,
@@ -164,6 +177,7 @@ func (s *qingStor) Stat(key string) (*storage.FileInfo, error) {
 		}
 		return nil, err
 	}
+	defer output.Close()
 
 	return &storage.FileInfo{
 		Size:    *output.ContentLength,

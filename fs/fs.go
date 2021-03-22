@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/navi-tt/storage"
 	"io"
 	"os"
@@ -12,11 +14,24 @@ type FS struct {
 	BaseDir string
 }
 
-func Init(cfg *FS) error {
-	storage.Register(storage.FS, &fs{
-		baseDir: cfg.BaseDir,
-	})
-	return nil
+func (f *fs) Init(cfg string) (storage.Storage, error) {
+	fmt.Printf("[COS Init] config: %s \n", cfg)
+	fsConfig := &FS{}
+	if err := json.Unmarshal([]byte(cfg), fsConfig); err != nil {
+		return nil, err
+	}
+
+	s := &fs{
+		baseDir: fsConfig.BaseDir,
+	}
+
+	return s, nil
+}
+
+var f = &fs{}
+
+func init() {
+	storage.Register("fs", f)
 }
 
 type fs struct {
@@ -42,6 +57,7 @@ func (f *fs) open(key string) (*os.File, error) {
 }
 
 func (f *fs) Put(key string, r io.Reader, contentLength int64) error {
+	fmt.Printf("[FS PUT] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
@@ -64,6 +80,7 @@ func (f *fs) Put(key string, r io.Reader, contentLength int64) error {
 }
 
 func (f *fs) Get(key string, wa io.WriterAt) error {
+	fmt.Printf("[FS GET] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
@@ -83,6 +100,7 @@ func (f *fs) Get(key string, wa io.WriterAt) error {
 }
 
 func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
+	fmt.Printf("[FS FileStream] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return nil, nil, storage.ErrObjectKeyInvalid
 	}
@@ -111,6 +129,7 @@ func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 }
 
 func (f *fs) Stat(key string) (*storage.FileInfo, error) {
+	fmt.Printf("[FS STAT] object: %s \n", key)
 	fd, err := f.open(key)
 	if err != nil {
 		return nil, err
@@ -130,6 +149,7 @@ func (f *fs) Stat(key string) (*storage.FileInfo, error) {
 }
 
 func (f *fs) Del(key string) error {
+	fmt.Printf("[FS DEL] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
@@ -146,6 +166,7 @@ func (f *fs) Del(key string) error {
 }
 
 func (f *fs) Size(key string) (int64, error) {
+	fmt.Printf("[FS SIZE] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return 0, storage.ErrObjectKeyInvalid
 	}
@@ -163,6 +184,7 @@ func (f *fs) Size(key string) (int64, error) {
 }
 
 func (f *fs) IsExist(key string) (bool, error) {
+	fmt.Printf("[FS ISEXIST] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return false, storage.ErrObjectKeyInvalid
 	}
@@ -188,6 +210,7 @@ func (f *fs) pathJoinBaseDir(key string) string {
 }
 
 func (f *fs) CheckPermission(key string) error {
+	fmt.Printf("[FS CHECKPERMISSION] object: %s \n", key)
 
 	return nil
 }

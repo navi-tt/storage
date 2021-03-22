@@ -11,9 +11,14 @@ import (
 var s storage.Storage
 
 func TestMain(m *testing.M) {
-	s = &fs{
-		baseDir: "../testdata",
-	}
+	//s = &fs{
+	//	baseDir: "../testdata",
+	//}
+
+	s, _ = storage.Init("fs", `{
+		"BaseDir":"../testdata"
+	}`)
+
 	m.Run()
 }
 
@@ -29,7 +34,7 @@ func TestPut(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	fd, err := os.OpenFile("./tmp/get_test", os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
+	fd, err := os.OpenFile("../testdata/test_fs.txt", os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +49,6 @@ func TestGet(t *testing.T) {
 	}
 	byts := bytes.NewBuffer(nil)
 	io.Copy(byts, fd)
-	t.Log(byts.String())
 	t.Log("succ")
 }
 
