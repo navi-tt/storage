@@ -11,6 +11,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -26,11 +28,12 @@ type QingStor struct {
 }
 
 func (s *qingStor) Init(cfg string) (storage.Storage, error) {
-	fmt.Printf("[QS Init] config: %s \n", cfg)
 	qsConfig := &QingStor{}
 	if err := json.Unmarshal([]byte(cfg), qsConfig); err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("[QS Init] config: \n  %v \n", qsConfig)
 
 	qsCfg, err := config.New(qsConfig.AccesskeyId, qsConfig.SecretAccessKey)
 	if err != nil {
@@ -84,19 +87,24 @@ func (s *qingStor) Init(cfg string) (storage.Storage, error) {
 		qsSvc:  qsSvc,
 		bucket: bucket,
 	}
-
 	return qos, nil
-}
-
-var qos = &qingStor{}
-
-func init() {
-	storage.Register("qs", qos)
 }
 
 type qingStor struct {
 	qsSvc  *qs.Service
 	bucket *qs.Bucket
+}
+
+func (s *qingStor) PutByPath(key string, src string) error {
+	fmt.Printf("[QS PUT BY PATH] object: %s \n", key)
+
+	fd, fi, err := storage.OpenLocal(src)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	return s.Put(key, fd, fi.Size())
 }
 
 func (s *qingStor) Put(key string, r io.Reader, contentLength int64) error {
@@ -121,6 +129,19 @@ func (s *qingStor) Put(key string, r io.Reader, contentLength int64) error {
 	}
 
 	return nil
+}
+
+func (s *qingStor) GetToPath(key string, dest string) error {
+	fmt.Printf("[QS GET TO PATH] object: %s \n", key)
+
+	dir, _ := filepath.Split(dest)
+	_ = os.MkdirAll(dir, 0666)
+	fd, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	return s.Get(key, fd)
 }
 
 func (s *qingStor) Get(key string, wa io.WriterAt) error {
@@ -235,4 +256,10 @@ func (s *qingStor) Del(key string) error {
 	}
 
 	return nil
+}
+
+var qos = &qingStor{}
+
+func init() {
+	storage.Register("qs", qos)
 }

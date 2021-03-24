@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -22,12 +24,13 @@ type COS struct {
 }
 
 func (s *tensenCos) Init(cfg string) (storage.Storage, error) {
-	fmt.Printf("[COS Init] conf : %s \n", cfg)
 
 	cosConfig := &COS{}
 	if err := json.Unmarshal([]byte(cfg), cosConfig); err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("[COS Init] conf : \n %v \n", cosConfig)
 
 	storageUrl := fmt.Sprintf("%s://%s.%s", cosConfig.Protocol, cosConfig.Bucket, cosConfig.Host)
 
@@ -40,21 +43,25 @@ func (s *tensenCos) Init(cfg string) (storage.Storage, error) {
 		},
 	})
 
-	scos := &tensenCos{
-		client: c,
-	}
+	cs.client = c
 
-	return scos, nil
-}
-
-var cs = &tensenCos{}
-
-func init() {
-	storage.Register("cos", cs)
+	return cs, nil
 }
 
 type tensenCos struct {
 	client *cos.Client
+}
+
+func (s *tensenCos) PutByPath(key string, src string) error {
+	fmt.Printf("[COS PUT BY PATH] object: %s \n", key)
+
+	fd, fi, err := storage.OpenLocal(src)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	return s.Put(key, fd, fi.Size())
 }
 
 func (s *tensenCos) Put(key string, r io.Reader, contentLength int64) error {
@@ -67,6 +74,20 @@ func (s *tensenCos) Put(key string, r io.Reader, contentLength int64) error {
 	}
 
 	return nil
+}
+
+func (s *tensenCos) GetToPath(key string, dest string) error {
+	fmt.Printf("[COS GET TO PATH] object: %s \n", key)
+
+	dir, _ := filepath.Split(dest)
+	_ = os.MkdirAll(dir, 0766)
+	fd, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0766)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	return s.Get(key, fd)
 }
 
 func (s *tensenCos) Get(key string, wa io.WriterAt) error {
@@ -198,4 +219,10 @@ func (s *tensenCos) Del(key string) error {
 	}
 
 	return nil
+}
+
+var cs = &tensenCos{}
+
+func init() {
+	storage.Register("cos", cs)
 }

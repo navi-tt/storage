@@ -10,70 +10,34 @@ import (
 	"strings"
 )
 
-// 本地文件系统存储服务
-type FS struct {
-	BaseDir string
-}
-
 func (f *fs) Init(cfg string) (storage.Storage, error) {
-	fmt.Printf("[COS Init] config: %s \n", cfg)
-	fsConfig := &FS{}
+	fsConfig := &fs{}
 	if err := json.Unmarshal([]byte(cfg), fsConfig); err != nil {
 		return nil, err
 	}
 
-	s := &fs{
-		baseDir: fsConfig.BaseDir,
-	}
+	fmt.Printf("[FS Init] config: \n %v \n", fsConfig)
 
-	return s, nil
-}
-
-var f = &fs{}
-
-func init() {
-	storage.Register("fs", f)
+	f.BaseDir = fsConfig.BaseDir
+	return f, nil
 }
 
 type fs struct {
-	baseDir string
+	BaseDir string
 }
 
-func (f *fs) open(key string) (*os.File, os.FileInfo, error) {
-	var (
-		err  error
-		fd   *os.File
-		stat os.FileInfo
-		path = f.path(key)
-	)
+func (f *fs) PutByPath(key string, src string) error {
+	fmt.Printf("[FS PUT BY PATH] object: %s \n", key)
 
-	if !storage.ValidKey(key) {
-		return nil, nil, storage.ErrObjectKeyInvalid
-	}
+	path := f.path(key)
 
-	fd, err = os.Open(path)
+	fd, fi, err := storage.OpenLocal(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil, storage.ErrObjectNotFound
-		}
-
-		if os.IsPermission(err) {
-			return nil, nil, storage.ErrObjectReadPermissionDeny
-		}
-
-		return nil, nil, err
+		return err
 	}
+	defer fd.Close()
 
-	stat, err = fd.Stat()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if stat.Size() == 0 {
-		return nil, nil, storage.ErrObjectEmptyContent
-	}
-
-	return fd, stat, nil
+	return f.Put(key, fd, fi.Size())
 }
 
 func (f *fs) Put(key string, r io.Reader, contentLength int64) error {
@@ -85,12 +49,12 @@ func (f *fs) Put(key string, r io.Reader, contentLength int64) error {
 	path := f.path(key)
 	p, _ := filepath.Split(path)
 	if err := os.MkdirAll(p, 0766); err != nil {
+		fmt.Println(p)
 		return err
 	}
 
 	fd, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0766)
 	if err != nil {
-
 		if os.IsPermission(err) {
 			return storage.ErrObjectWritePermissionDeny
 		}
@@ -111,7 +75,7 @@ func (f *fs) Get(key string, wa io.WriterAt) error {
 
 	path := f.path(key)
 
-	fd, _, err := f.open(path)
+	fd, _, err := storage.OpenLocal(path)
 	if err != nil {
 		return err
 	}
@@ -120,16 +84,32 @@ func (f *fs) Get(key string, wa io.WriterAt) error {
 	return storage.Copy(wa, fd)
 }
 
+func (f *fs) GetToPath(key string, dest string) error {
+	fmt.Printf("[FS GET TO PATH] object: %s \n", key)
+
+	dir, _ := filepath.Split(dest)
+	_ = os.MkdirAll(dir, 0766)
+	fd, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0766)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	return f.Get(key, fd)
+}
+
 func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 	fmt.Printf("[FS FileStream] object: %s \n", key)
 	if !storage.ValidKey(key) {
 		return nil, nil, storage.ErrObjectKeyInvalid
 	}
 
-	fd, stat, err := f.open(key)
+	path := f.path(key)
+
+	fd, stat, err := storage.OpenLocal(path)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer fd.Close()
 
 	return fd, &storage.FileInfo{
 		ModTime: stat.ModTime(),
@@ -142,10 +122,13 @@ func (f *fs) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
 func (f *fs) Stat(key string) (*storage.FileInfo, error) {
 	fmt.Printf("[FS STAT] object: %s \n", key)
 
-	_, stat, err := f.open(key)
+	path := f.path(key)
+
+	fd, stat, err := storage.OpenLocal(path)
 	if err != nil {
 		return nil, err
 	}
+	defer fd.Close()
 
 	return &storage.FileInfo{
 		ModTime: stat.ModTime(),
@@ -218,9 +201,15 @@ func (f *fs) IsExist(key string) (bool, error) {
 }
 
 func (f *fs) path(key string) string {
-	if strings.TrimSpace(f.baseDir) == "" {
+	if strings.TrimSpace(f.BaseDir) == "" {
 		return key
 	}
 
-	return filepath.Join(f.baseDir, key)
+	return filepath.Join(f.BaseDir, key)
+}
+
+var f = &fs{}
+
+func init() {
+	storage.Register("fs", f)
 }
