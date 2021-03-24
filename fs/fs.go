@@ -29,7 +29,7 @@ type fs struct {
 func (f *fs) PutByPath(key string, src string) error {
 	fmt.Printf("[FS PUT BY PATH] object: %s \n", key)
 
-	path := f.path(key)
+	path := f.path(src)
 
 	fd, fi, err := storage.OpenLocal(path)
 	if err != nil {
