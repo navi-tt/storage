@@ -165,6 +165,8 @@ func (s *qingStor) Get(key string, wa io.WriterAt) error {
 }
 
 func (s *qingStor) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
+	fmt.Printf("[QS FILE STREAM] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return nil, nil, storage.ErrObjectKeyInvalid
 	}
@@ -186,6 +188,8 @@ func (s *qingStor) FileStream(key string) (io.ReadCloser, *storage.FileInfo, err
 }
 
 func (s *qingStor) Stat(key string) (*storage.FileInfo, error) {
+	fmt.Printf("[QS STAT] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return nil, storage.ErrObjectKeyInvalid
 	}
@@ -207,6 +211,8 @@ func (s *qingStor) Stat(key string) (*storage.FileInfo, error) {
 }
 
 func (s *qingStor) Size(key string) (int64, error) {
+	fmt.Printf("[QS SIZE] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return 0, storage.ErrObjectKeyInvalid
 	}
@@ -227,6 +233,8 @@ func (s *qingStor) Size(key string) (int64, error) {
 }
 
 func (s *qingStor) IsExist(key string) (bool, error) {
+	fmt.Printf("[QS IS EXIST] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return false, storage.ErrObjectKeyInvalid
 	}
@@ -243,6 +251,8 @@ func (s *qingStor) IsExist(key string) (bool, error) {
 }
 
 func (s *qingStor) Del(key string) error {
+	fmt.Printf("[QS DEL] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}

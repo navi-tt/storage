@@ -108,6 +108,8 @@ func (s *tensenCos) Get(key string, wa io.WriterAt) error {
 }
 
 func (s *tensenCos) FileStream(key string) (io.ReadCloser, *storage.FileInfo, error) {
+	fmt.Printf("[COS FILE STREAM] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return nil, nil, storage.ErrObjectKeyInvalid
 	}
@@ -134,6 +136,8 @@ func (s *tensenCos) FileStream(key string) (io.ReadCloser, *storage.FileInfo, er
 }
 
 func (s *tensenCos) Stat(key string) (*storage.FileInfo, error) {
+	fmt.Printf("[COS STAT] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return nil, storage.ErrObjectKeyInvalid
 	}
@@ -160,6 +164,8 @@ func (s *tensenCos) Stat(key string) (*storage.FileInfo, error) {
 }
 
 func (s *tensenCos) Size(key string) (int64, error) {
+	fmt.Printf("[COS SIZE] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return 0, storage.ErrObjectKeyInvalid
 	}
@@ -184,6 +190,8 @@ func (s *tensenCos) Size(key string) (int64, error) {
 }
 
 func (s *tensenCos) IsExist(key string) (bool, error) {
+	fmt.Printf("[COS IS EXIST] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return false, storage.ErrObjectKeyInvalid
 	}
@@ -205,6 +213,7 @@ func (s *tensenCos) IsExist(key string) (bool, error) {
 
 func (s *tensenCos) Del(key string) error {
 	fmt.Printf("[COS DEL] object: %s \n", key)
+
 	if !storage.ValidKey(key) {
 		return storage.ErrObjectKeyInvalid
 	}
