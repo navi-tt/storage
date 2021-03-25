@@ -233,5 +233,5 @@ func (s *tensenCos) Del(key string) error {
 var cs = &tensenCos{}
 
 func init() {
-	storage.Register("cos", cs)
+	storage.Register(storage.COS, cs)
 }

@@ -54,10 +54,10 @@ type Storage interface {
 }
 
 var (
-	instMap = make(map[string]Storage)
+	instMap = make(map[StorageType]Storage)
 )
 
-func Register(name string, inst Storage) {
+func Register(name StorageType, inst Storage) {
 	if inst == nil {
 		panic("storage: Register storage is nil")
 	}
@@ -67,7 +67,7 @@ func Register(name string, inst Storage) {
 	instMap[name] = inst
 }
 
-func Init(name string, cfg string) (Storage, error) {
+func Init(name StorageType, cfg string) (Storage, error) {
 
 	s, ok := instMap[name]
 	if !ok {
@@ -82,7 +82,7 @@ func Init(name string, cfg string) (Storage, error) {
 	return storageProvider, nil
 }
 
-func GetStorage(name string) (Storage, error) {
+func GetStorage(name StorageType) (Storage, error) {
 	s, ok := instMap[name]
 	if !ok {
 		return nil, fmt.Errorf("storage: unknown storage %q (forgotten import?)", name)

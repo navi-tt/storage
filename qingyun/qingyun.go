@@ -271,5 +271,5 @@ func (s *qingStor) Del(key string) error {
 var qos = &qingStor{}
 
 func init() {
-	storage.Register("qs", qos)
+	storage.Register(storage.QS, qos)
 }

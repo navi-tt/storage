@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if _, err := storage.Init("fs", `{
+	if _, err := storage.Init(storage.FS, `{
 		"BaseDir":"./testdata"
 	}`); err != nil {
 		fmt.Printf("err : %s\n", err.Error())

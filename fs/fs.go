@@ -211,5 +211,5 @@ func (f *fs) path(key string) string {
 var f = &fs{}
 
 func init() {
-	storage.Register("fs", f)
+	storage.Register(storage.FS, f)
 }
