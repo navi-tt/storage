@@ -11,10 +11,10 @@ var s storage.Storage
 
 func TestMain(m *testing.M) {
 	s, _ = storage.Init("cos", `{
-		"SecretID":"AKID74k9NB8NkEJCoCsAk7ipgHbhyzkI6ZIv" 
-		"SecretKey":"13oIVW5NN9eutfpkOltFJwIM9gwwNWNu"
+		"SecretID":"" 
+		"SecretKey":""
 		"Host":"cos.ap-beijing.myqcloud.com"     
-		"Bucket":"kst-zxm-1304077072"   
+		"Bucket":""   
 		"Protocol":"http" 
 	}`)
 
